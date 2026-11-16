@@ -13,6 +13,7 @@ import { cartRouter } from './modules/cart/cart.routes.js';
 import { orderRouter } from './modules/orders/order.routes.js';
 import { deliveryRouter } from './modules/delivery/delivery.routes.js';
 import { trackingRouter } from './modules/tracking/tracking.routes.js';
+import { paymentRouter } from './modules/payments/payment.routes.js';
 import { ApiError } from './utils/apiError.js';
 import { ApiResponse } from './utils/apiResponse.js';
 
@@ -39,8 +40,15 @@ export const createApp = (): Application => {
     })
   );
 
-  // 3. Request parsers
-  app.use(express.json({ limit: '10mb' }));
+  // 3. Request parsers (with rawBody capture for webhook HMAC signature verification)
+  app.use(
+    express.json({
+      limit: '10mb',
+      verify: (req: any, _res, buf) => {
+        req.rawBody = buf.toString();
+      },
+    })
+  );
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
   app.use(cookieParser(env.COOKIE_SECRET));
 
@@ -70,6 +78,7 @@ export const createApp = (): Application => {
   app.use('/api/v1/orders', orderRouter);
   app.use('/api/v1/delivery', deliveryRouter);
   app.use('/api/v1/tracking', trackingRouter);
+  app.use('/api/v1/payments', paymentRouter);
 
   // 8. 404 Route Handler
   app.use((req: Request, _res: Response, next: NextFunction) => {
